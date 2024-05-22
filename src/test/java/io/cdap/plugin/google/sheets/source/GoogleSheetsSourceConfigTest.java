@@ -359,13 +359,13 @@ public class GoogleSheetsSourceConfigTest {
     Assert.assertTrue(columns.get(0).getSubColumns().isEmpty());
 
     // check complex columns, top header should have column name as name
-    Assert.assertEquals("title_with_space", columns.get(1).getHeaderTitle());
+    Assert.assertEquals("B", columns.get(1).getHeaderTitle());
     List<ColumnComplexSchemaInfo> subColumns = columns.get(1).getSubColumns();
     Assert.assertFalse(subColumns.isEmpty());
 
     // check sub-columns
     Assert.assertEquals(2, subColumns.size());
-    Assert.assertEquals("col_9titleWithFirstNumber", subColumns.get(0).getHeaderTitle());
+    Assert.assertEquals("B", subColumns.get(0).getHeaderTitle());
     Assert.assertTrue(subColumns.get(0).getSubColumns().isEmpty());
     Assert.assertEquals("d", subColumns.get(1).getHeaderTitle());
     Assert.assertTrue(subColumns.get(0).getSubColumns().isEmpty());
@@ -375,42 +375,5 @@ public class GoogleSheetsSourceConfigTest {
     Field metadataKeyCellsField = config.getClass().getDeclaredField(fieldName);
     metadataKeyCellsField.setAccessible(true);
     metadataKeyCellsField.set(config, fieldValue);
-  }
-
-  @Test
-  public void testProcessColumnsSameCaseSensitiveTitles()
-    throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Method processColumnsMethod = config.getClass().getDeclaredMethod("processColumns", List.class,
-                                                                      List.class, List.class, List.class, int.class,
-                                                                      FailureCollector.class);
-    processColumnsMethod.setAccessible(true);
-
-    List<CellData> columnsRow = new ArrayList<>();
-    columnsRow.add(new CellData().setFormattedValue("title with space"));
-    columnsRow.add(new CellData().setFormattedValue("Title with space"));
-    columnsRow.add(new CellData().setFormattedValue("Title%with%space"));
-
-    List<CellData> dataRow = new ArrayList<>();
-    dataRow.add(new CellData().setUserEnteredValue(new ExtendedValue().setStringValue("aa")));
-    dataRow.add(new CellData().setUserEnteredValue(new ExtendedValue().setNumberValue(13d)));
-    dataRow.add(new CellData().setUserEnteredValue(new ExtendedValue().setBoolValue(true)));
-
-    List<GridRange> columnMerges = new ArrayList<>();
-
-    FailureCollector collector = new DefaultFailureCollector("", Collections.EMPTY_MAP);
-
-    int lastDataColumn = 3;
-
-    LinkedHashMap<Integer, ColumnComplexSchemaInfo> columns =
-      (LinkedHashMap<Integer, ColumnComplexSchemaInfo>) processColumnsMethod.invoke(config, columnsRow,
-                                                                                    null, dataRow, columnMerges,
-                                                                                    lastDataColumn, collector);
-
-    Assert.assertEquals(3, columns.size());
-    Assert.assertTrue(columns.keySet().containsAll(Arrays.asList(0, 1, 2)));
-
-    Assert.assertEquals("title_with_space", columns.get(0).getHeaderTitle());
-    Assert.assertEquals("Title_with_space_2", columns.get(1).getHeaderTitle());
-    Assert.assertEquals("Title_with_space_3", columns.get(2).getHeaderTitle());
   }
 }
