@@ -27,6 +27,7 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
@@ -51,11 +52,14 @@ public class GoogleSheetsSource extends BatchSource<NullWritable, StructuredReco
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector failureCollector = pipelineConfigurer.getStageConfigurer().getFailureCollector();
     config.validate(failureCollector);
     failureCollector.getOrThrowException();
 
-    pipelineConfigurer.getStageConfigurer().setOutputSchema(config.getSchema(failureCollector));
+    Schema configuredSchema = config.getSchema(failureCollector);
+    failureCollector.getOrThrowException();
+    stageConfigurer.setOutputSchema(configuredSchema);
   }
 
   @Override

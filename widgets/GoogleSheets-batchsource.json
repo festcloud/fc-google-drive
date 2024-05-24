@@ -433,7 +433,24 @@
       ]
     }
   ],
-  "outputs": [],
+  "outputs": [
+    {
+      "name": "schema",
+      "label": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {
+        "schema-types": [
+          "boolean",
+          "long",
+          "double",
+          "bytes",
+          "string",
+          "array"
+        ],
+        "schema-default-type": "string"
+      }
+    }
+  ],
   "filters": [
     {
       "name": "Select modification date range",
