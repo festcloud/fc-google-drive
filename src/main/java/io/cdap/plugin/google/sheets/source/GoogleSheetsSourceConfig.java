@@ -99,6 +99,8 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
   private static final Logger LOG = LoggerFactory.getLogger(GoogleSheetsSourceConfig.class);
   private static final Pattern CELL_ADDRESS = Pattern.compile("^([A-Z]+)([0-9]+)$");
   private static final Pattern NOT_VALID_PATTERN = Pattern.compile("[^A-Za-z0-9_]+");
+  private static final Pattern COLUMN_NAME = Pattern.compile("^[A-Za-z_][A-Za-z0-9_-]*$");
+  public static final String CLEANSE_COLUMN_NAMES = "columnNameCleansingEnabled";
   private static LinkedHashMap<Integer, ColumnComplexSchemaInfo> dataSchemaInfo = new LinkedHashMap<>();
 
   @Name(SHEETS_TO_PULL)
@@ -233,6 +235,13 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
   @Description("Schema field name for sheet name.")
   @Macro
   private String sheetFieldName;
+
+  @Nullable
+  @Name(CLEANSE_COLUMN_NAMES)
+  @Description("Toggle that specifies whether to cleanse column names containing special characters. " +
+    "Special characters will be replaced by underscores.")
+  @Macro
+  private Boolean columnNameCleansingEnabled;
 
   public GoogleSheetsSourceConfig(String referenceName, @Nullable String sheetsIdentifiers, String formatting,
                                   Boolean skipEmptyData, String columnNamesSelection,
@@ -616,7 +625,7 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
       }
       String title = columnHeaderCell.getFormattedValue();
       if (StringUtils.isNotEmpty(title)) {
-        title = checkTitleFormat(title, seenFieldNames);
+        title = checkTitleFormat(title, seenFieldNames, i);
 
         // for merge we should analyse sub headers for data schemas
         if (isMergeHead) {
@@ -650,7 +659,7 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
         if (StringUtils.isEmpty(subHeaderTitle)) {
           subHeaderTitle = ColumnAddressConverter.getColumnName(i + 1);
         }
-        subHeaderTitle = checkTitleFormat(subHeaderTitle, seenFieldNames);
+        subHeaderTitle = checkTitleFormat(subHeaderTitle, seenFieldNames, i);
       } else {
         subHeaderTitle = ColumnAddressConverter.getColumnName(i + 1);
       }
@@ -669,7 +678,14 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     return subHeaders;
   }
 
-  private String checkTitleFormat(String title, Map<String, Integer> seenFieldNames) {
+  private String checkTitleFormat(String title, Map<String, Integer> seenFieldNames, int columnIndex) {
+    if (getColumnNameCleansingEnabled()) {
+      return applyFileTitleConvention(title, seenFieldNames);
+    }
+    return applySheetTitleConvention(title, columnIndex);
+  }
+
+  private String applyFileTitleConvention(String title, Map<String, Integer> seenFieldNames) {
     final String replacementChar = "_";
 
     StringBuilder cleanFieldNameBuilder = new StringBuilder();
@@ -697,6 +713,17 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
       cleanFieldNameBuilder.append(replacementChar).append(count);
     }
     return cleanFieldNameBuilder.toString();
+  }
+
+  private String applySheetTitleConvention(String title, int columnIndex) {
+    if (!COLUMN_NAME.matcher(title).matches()) {
+      String defaultColumnName = ColumnAddressConverter.getColumnName(columnIndex + 1);
+      LOG.warn(String.format("Original column name '%s' doesn't satisfy column name requirements '%s', " +
+                               "the default column name '%s' will be used.", title, COLUMN_NAME.pattern(),
+                             defaultColumnName));
+      return defaultColumnName;
+    }
+    return title;
   }
 
   private Schema getDataCellSchema(List<CellData> dataRow, int index, String headerName) {
@@ -957,6 +984,11 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     return Boolean.TRUE.equals(autoDetectRowsAndColumns);
   }
 
+  @Nullable
+  public boolean getColumnNameCleansingEnabled() {
+    return Boolean.TRUE.equals(columnNameCleansingEnabled);
+  }
+
   public Integer getLastDataColumn() {
     return lastDataColumn == null ? 0 : Integer.parseInt(lastDataColumn);
   }
@@ -1150,6 +1182,10 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     this.endDate = endDate;
   }
 
+  public void setColumnNameCleansingEnabled(@Nullable Boolean columnNameCleansingEnabled) {
+    this.columnNameCleansingEnabled = columnNameCleansingEnabled;
+  }
+
   public static GoogleSheetsSourceConfig of(JsonObject properties) throws IOException {
 
     GoogleSheetsSourceConfig googleSheetsSourceConfig = GoogleSheetsSourceConfig
@@ -1331,6 +1367,11 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     if (properties.has(GoogleSheetsSourceConfig.AUTO_DETECT_ROWS_AND_COLUMNS)) {
       googleSheetsSourceConfig.setAutoDetectRowsAndColumns(
         properties.get(GoogleSheetsSourceConfig.AUTO_DETECT_ROWS_AND_COLUMNS).getAsBoolean());
+    }
+
+    if (properties.has(GoogleSheetsSourceConfig.CLEANSE_COLUMN_NAMES)) {
+      googleSheetsSourceConfig.setColumnNameCleansingEnabled(
+        properties.get(GoogleSheetsSourceConfig.CLEANSE_COLUMN_NAMES).getAsBoolean());
     }
 
     return googleSheetsSourceConfig;

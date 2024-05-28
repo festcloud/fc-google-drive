@@ -429,6 +429,22 @@
             "default": "100",
             "min": "1"
           }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable Cleansing Column Names",
+          "name": "columnNameCleansingEnabled",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "true"
+          }
         }
       ]
     }
