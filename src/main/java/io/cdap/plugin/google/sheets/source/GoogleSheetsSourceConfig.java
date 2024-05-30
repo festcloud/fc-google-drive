@@ -120,7 +120,7 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
   @Name(NAME_SCHEMA)
   @Description("The schema of the table to read.")
   @Macro
-  private transient Schema schema = null;
+  private String schema;
 
   @Name(FORMATTING)
   @Description("Output format for numeric sheet cells. " +
@@ -251,7 +251,7 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
                                   @Nullable String lastDataColumn, @Nullable String lastDataRow,
                                   @Nullable String metadataCells, @Nullable Integer readBufferSize,
                                   @Nullable Boolean addNameFields, @Nullable String spreadsheetFieldName,
-                                  @Nullable String sheetFieldName) {
+                                  @Nullable String sheetFieldName, @Nullable String schema) {
 
     super(referenceName);
     this.sheetsIdentifiers = sheetsIdentifiers;
@@ -271,6 +271,7 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     this.addNameFields = addNameFields;
     this.spreadsheetFieldName = spreadsheetFieldName;
     this.sheetFieldName = sheetFieldName;
+    this.schema = schema;
   }
 
 
@@ -290,9 +291,15 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
                              "Perhaps no validation step was executed before schema generation.")
           .withConfigProperty(SCHEMA);
       }
-      schema = SchemaBuilder.buildSchema(this, new ArrayList<>(dataSchemaInfo.values()));
+      return SchemaBuilder.buildSchema(this, new ArrayList<>(dataSchemaInfo.values()));
     }
-    return schema;
+    try {
+      return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
+    } catch (IOException e) {
+      collector.addFailure("Invalid schema: " + e.getMessage(),
+          null).withConfigProperty(NAME_SCHEMA);
+    }
+    throw collector.getOrThrowException();
   }
 
   private boolean shouldGetSchema() {
@@ -1083,8 +1090,8 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     this.sheetsIdentifiers = sheetsIdentifiers;
   }
 
-  public void setSchema(String schema) throws IOException {
-    this.schema = Schema.parseJson(schema);
+  public void setSchema(String schema) {
+    this.schema = schema;
   }
 
   public void setFormatting(String formatting) {
