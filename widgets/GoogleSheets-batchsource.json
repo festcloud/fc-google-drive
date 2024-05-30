@@ -429,11 +429,44 @@
             "default": "100",
             "min": "1"
           }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable Cleansing Column Names",
+          "name": "columnNameCleansingEnabled",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "true"
+          }
         }
       ]
     }
   ],
-  "outputs": [],
+  "outputs": [
+    {
+      "name": "schema",
+      "label": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {
+        "schema-types": [
+          "boolean",
+          "long",
+          "double",
+          "bytes",
+          "string",
+          "array"
+        ],
+        "schema-default-type": "string"
+      }
+    }
+  ],
   "filters": [
     {
       "name": "Select modification date range",
