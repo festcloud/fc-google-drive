@@ -445,6 +445,22 @@
             },
             "default": "true"
           }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Extract Hyperlink as value if Exist",
+          "name": "extractHyperlinkIfExist",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Yes"
+            },
+            "off": {
+              "value": "false",
+              "label": "No"
+            },
+            "default": "false"
+          }
         }
       ]
     }

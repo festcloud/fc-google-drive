@@ -57,7 +57,8 @@ public class SheetTransformer {
                                            String metadataRecordName,
                                            boolean addNames,
                                            String spreadsheetFieldName,
-                                           String sheetFieldName) {
+                                           String sheetFieldName,
+                                           boolean extractHyperlinkIfExist) {
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     for (Schema.Field field : schema.getFields()) {
       String name = field.getName();
@@ -72,7 +73,7 @@ public class SheetTransformer {
         if (complexSingleValueColumn.getData() == null && complexSingleValueColumn.getSubColumns().isEmpty()) {
           builder.set(name, null);
         } else {
-          processCellData(builder, field, complexSingleValueColumn);
+          processCellData(builder, field, complexSingleValueColumn, extractHyperlinkIfExist);
         }
       }
     }
@@ -80,7 +81,8 @@ public class SheetTransformer {
   }
 
   private static void processCellData(StructuredRecord.Builder builder, Schema.Field field,
-                                      ComplexSingleValueColumn complexSingleValueColumn) {
+                                      ComplexSingleValueColumn complexSingleValueColumn,
+                                      boolean extractHyperlinkIfExist) {
     String fieldName = field.getName();
     Schema fieldSchema = field.getSchema();
     Schema.LogicalType fieldLogicalType = fieldSchema.getNonNullable().getLogicalType();
@@ -111,7 +113,11 @@ public class SheetTransformer {
       }
 
     } else if (Schema.Type.STRING.equals(fieldType)) {
-      builder.set(fieldName, complexSingleValueColumn.getData().getFormattedValue());
+      if (extractHyperlinkIfExist && complexSingleValueColumn.getData().containsKey("hyperlink")) {
+        builder.set(fieldName, complexSingleValueColumn.getData().getHyperlink());
+      } else {
+        builder.set(fieldName, complexSingleValueColumn.getData().getFormattedValue());
+      }
 
     } else if (Schema.Type.DOUBLE.equals(fieldType)) {
       ExtendedValue effectiveValue = complexSingleValueColumn.getData().getEffectiveValue();
@@ -119,11 +125,11 @@ public class SheetTransformer {
         builder.set(fieldName, effectiveValue.getNumberValue());
       }
     } else if (Schema.Type.RECORD.equals(fieldType)) {
-      builder.set(fieldName, processRecord(fieldSchema.getNonNullable(), complexSingleValueColumn));
+      builder.set(fieldName, processRecord(fieldSchema.getNonNullable(), complexSingleValueColumn, extractHyperlinkIfExist));
     }
   }
 
-  private static StructuredRecord processRecord(Schema fieldSchema, ComplexSingleValueColumn complexSingleValueColumn) {
+  private static StructuredRecord processRecord(Schema fieldSchema, ComplexSingleValueColumn complexSingleValueColumn, boolean extractHyperlinkIfExist) {
     StructuredRecord.Builder builder = StructuredRecord.builder(fieldSchema);
     for (Schema.Field subField : fieldSchema.getFields()) {
       String subFieldName = subField.getName();
@@ -131,7 +137,7 @@ public class SheetTransformer {
       if (complexSubColumn.getData() == null) {
         builder.set(subFieldName, null);
       } else {
-        processCellData(builder, subField, complexSubColumn);
+        processCellData(builder, subField, complexSubColumn, extractHyperlinkIfExist);
       }
     }
     return builder.build();
