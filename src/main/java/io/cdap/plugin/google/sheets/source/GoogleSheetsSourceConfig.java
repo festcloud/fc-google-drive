@@ -1392,7 +1392,7 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
         properties.get(GoogleSheetsSourceConfig.CLEANSE_COLUMN_NAMES).getAsBoolean());
     }
     if (properties.has(GoogleSheetsSourceConfig.EXTRACT_HYPERLINK_IF_EXIST)) {
-      googleSheetsSourceConfig.setColumnNameCleansingEnabled(
+      googleSheetsSourceConfig.setExtractHyperlinkIfExist(
         properties.get(GoogleSheetsSourceConfig.EXTRACT_HYPERLINK_IF_EXIST).getAsBoolean());
     }
 
