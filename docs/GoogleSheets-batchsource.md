@@ -153,6 +153,10 @@ Names Row contains less number of columns.
 **Enable Cleansing Column Names:** Toggle that specifies whether to cleanse column names containing special characters.
 Special characters will be replaced by underscores.
 
+**Extract Hyperlink as value if Exist:** Toggle that specifies whether to extract the actual hyperlink value
+if it exists in the cell content. If enabled, the hyperlink value will be extracted and used as the cell 
+content instead of the displayed text.
+
 ### Steps to Generate OAuth2 Credentials
 1. Create credentials for the Client ID and Client Secret properties [here](https://console.cloud.google.com/apis/credentials).
 2. On the Create OAuth client ID page, under Authorized redirect URIs, specify a URI of `http://localhost:8080`.

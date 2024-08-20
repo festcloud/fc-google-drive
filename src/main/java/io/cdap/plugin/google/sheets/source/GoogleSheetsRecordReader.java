@@ -191,7 +191,7 @@ public class GoogleSheetsRecordReader extends RecordReader<NullWritable, Structu
     if (!config.isSkipEmptyData() || !rowRecord.isEmptyData()) {
       return SheetTransformer.transform(rowRecord, schema, config.isExtractMetadata(),
         config.getMetadataFieldName(), config.getAddNameFields(),
-        config.getSpreadsheetFieldName(), config.getSheetFieldName());
+        config.getSpreadsheetFieldName(), config.getSheetFieldName(), config.getExtractHyperlinkIfExist());
     }
 
     return null;

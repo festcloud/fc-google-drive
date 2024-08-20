@@ -101,6 +101,7 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
   private static final Pattern NOT_VALID_PATTERN = Pattern.compile("[^A-Za-z0-9_]+");
   private static final Pattern COLUMN_NAME = Pattern.compile("^[A-Za-z_][A-Za-z0-9_-]*$");
   public static final String CLEANSE_COLUMN_NAMES = "columnNameCleansingEnabled";
+  public static final String EXTRACT_HYPERLINK_IF_EXIST = "extractHyperlinkIfExist";
   private static LinkedHashMap<Integer, ColumnComplexSchemaInfo> dataSchemaInfo = new LinkedHashMap<>();
 
   @Name(SHEETS_TO_PULL)
@@ -242,6 +243,14 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     "Special characters will be replaced by underscores.")
   @Macro
   private Boolean columnNameCleansingEnabled;
+
+  @Nullable
+  @Name(EXTRACT_HYPERLINK_IF_EXIST)
+  @Description("Toggle that specifies whether to extract the actual hyperlink value " +
+          "if it exists in the cell content. If enabled, the hyperlink value will be extracted and used as the cell " +
+          "content instead of the displayed text.")
+  @Macro
+  private Boolean extractHyperlinkIfExist;
 
   public GoogleSheetsSourceConfig(String referenceName, @Nullable String sheetsIdentifiers, String formatting,
                                   Boolean skipEmptyData, String columnNamesSelection,
@@ -989,6 +998,11 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     return Boolean.TRUE.equals(columnNameCleansingEnabled);
   }
 
+  @Nullable
+  public boolean getExtractHyperlinkIfExist() {
+    return Boolean.TRUE.equals(extractHyperlinkIfExist);
+  }
+
   public Integer getLastDataColumn() {
     return lastDataColumn == null ? 0 : Integer.parseInt(lastDataColumn);
   }
@@ -1186,6 +1200,10 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     this.columnNameCleansingEnabled = columnNameCleansingEnabled;
   }
 
+  public void setExtractHyperlinkIfExist(@Nullable Boolean extractHyperlinkIfExist) {
+    this.extractHyperlinkIfExist = extractHyperlinkIfExist;
+  }
+
   public static GoogleSheetsSourceConfig of(JsonObject properties) throws IOException {
 
     GoogleSheetsSourceConfig googleSheetsSourceConfig = GoogleSheetsSourceConfig
@@ -1372,6 +1390,10 @@ public class GoogleSheetsSourceConfig extends GoogleFilteringSourceConfig {
     if (properties.has(GoogleSheetsSourceConfig.CLEANSE_COLUMN_NAMES)) {
       googleSheetsSourceConfig.setColumnNameCleansingEnabled(
         properties.get(GoogleSheetsSourceConfig.CLEANSE_COLUMN_NAMES).getAsBoolean());
+    }
+    if (properties.has(GoogleSheetsSourceConfig.EXTRACT_HYPERLINK_IF_EXIST)) {
+      googleSheetsSourceConfig.setExtractHyperlinkIfExist(
+        properties.get(GoogleSheetsSourceConfig.EXTRACT_HYPERLINK_IF_EXIST).getAsBoolean());
     }
 
     return googleSheetsSourceConfig;
