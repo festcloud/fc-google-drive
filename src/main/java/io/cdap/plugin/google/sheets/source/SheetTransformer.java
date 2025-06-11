@@ -125,11 +125,16 @@ public class SheetTransformer {
         builder.set(fieldName, effectiveValue.getNumberValue());
       }
     } else if (Schema.Type.RECORD.equals(fieldType)) {
-      builder.set(fieldName, processRecord(fieldSchema.getNonNullable(), complexSingleValueColumn, extractHyperlinkIfExist));
+      builder.set(fieldName,
+                  processRecord(fieldSchema.getNonNullable(), complexSingleValueColumn, extractHyperlinkIfExist)
+      );
     }
   }
 
-  private static StructuredRecord processRecord(Schema fieldSchema, ComplexSingleValueColumn complexSingleValueColumn, boolean extractHyperlinkIfExist) {
+  private static StructuredRecord processRecord(Schema fieldSchema,
+                                                ComplexSingleValueColumn complexSingleValueColumn,
+                                                boolean extractHyperlinkIfExist
+  ) {
     StructuredRecord.Builder builder = StructuredRecord.builder(fieldSchema);
     for (Schema.Field subField : fieldSchema.getFields()) {
       String subFieldName = subField.getName();
